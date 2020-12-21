@@ -27,7 +27,7 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 		elif event == Events.PRINT_CANCELLED:
 			self._printer.commands("M150 R255 U165 B0")
 			#self._logger.info("M150 R255 U165 B0")
-		else:
+		elif event == Events.PRINT_FAILED:
 			self._printer.commands("M150 R255 U0 B0")
 			#self._logger.info("M150 R255 U0 B0")
 
