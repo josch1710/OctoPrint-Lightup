@@ -34,13 +34,13 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 	def __sendStartStop(self, event):
 		if event in (Events.PRINT_DONE, Events.PRINT_STARTED):
 			self._printer.commands("M150 R0 U255 B0")
-			self._logger.info("M150 R0 U255 B0")
+			#self._logger.info("M150 R0 U255 B0")
 		elif event == Events.PRINT_CANCELLED:
 			self._printer.commands("M150 R255 U165 B0")
-			self._logger.info("M150 R255 U165 B0")
+			#self._logger.info("M150 R255 U165 B0")
 		else:
 			self._printer.commands("M150 R255 U0 B0")
-			self._logger.info("M150 R255 U0 B0")
+			#self._logger.info("M150 R255 U0 B0")
 
 	##~~ ProgressPlugin mixin
 	def on_print_progress(self, storage, path, progress):
@@ -109,7 +109,7 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 		)
 
 	##~~ Temperatur 
-	def get_tempature_reading(self, comm, parsed_temps):
+	def get_temperature_reading(self, comm, parsed_temps):
 		if not self.started:
 			return
 
@@ -124,27 +124,27 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 				hotend = v
 
 		if self.sequential:
-			if bed[1] is not None and bed[1] > 0:
+			if bed is not None and bed[1] is not None and bed[1] > 0:
 				led_no = self.ledcount - 1
 				percentage = bed[0] * 2.55 / bed[1]
 				self._printer.commands("M150 I{} R{} U{} B0".format(led_no, percentage, percentage))
-				self._logger.info("M150 I{} R{} U{} B0".format(led_no, percentage, percentage))
+				#self._logger.info("M150 I{} R{} U{} B0".format(led_no, percentage, percentage))
 
-			if hotend[1] is not None and hotend[1] > 0:
+			if hotend is not None and hotend[1] is not None and hotend[1] > 0:
 				led_no = self.ledcount - 2
 				percentage = hotend[0] * 2.55 / hotend[1]
 				self._printer.commands("M150 I{} R{} U{} B0".format(led_no, percentage, percentage))
-				self._logger.info("M150 I{} R{} U{} B0".format(led_no, percentage, percentage))
+				#self._logger.info("M150 I{} R{} U{} B0".format(led_no, percentage, percentage))
 			
 		else:
 			if bed[1] is not None and bed[1] > 0:
 				led_no = self.ledcount - 1
 				self._printer.commands("M150 R{} U{} B0".format(percentage, percentage))
-				self._logger.info("M150 R{} U{} B0".format(percentage, percentage))
+				#self._logger.info("M150 R{} U{} B0".format(percentage, percentage))
 			elif hotend[1] is not None and hotend[1] > 0:
 				percentage = hotend[0] * 2.55 / hotend[1]
 				self._printer.commands("M150 I{} R{} U0 B{}".format(percentage, percentage))
-				self._logger.info("M150 I{} R{} U0 B{}".format(percentage, percentage))
+				#self._logger.info("M150 I{} R{} U0 B{}".format(percentage, percentage))
 
 		return parsed_temps
 
@@ -176,6 +176,6 @@ def __plugin_load__():
 	global __plugin_hooks__
 	__plugin_hooks__ = {
 		"octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
-		"octoprint.comm.protocol.temperatures.received": __plugin_implementation__.get_tempature_reading
+		"octoprint.comm.protocol.temperatures.received": __plugin_implementation__.get_temperature_reading
 	}
 
