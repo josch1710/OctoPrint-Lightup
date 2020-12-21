@@ -21,17 +21,6 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 
 	##~~ EventHandlerPlugin mixin
 	def on_event(self, event, payload):
-		if event == Events.PRINT_STARTED:
-			self.started = True
-			self.lastProgress = 0
-			self.__sendStartStop(event)
-
-		elif event in (Events.PRINT_FAILED, Events.PRINT_CANCELLED, Events.PRINT_DONE):
-			self.started = False
-			self.lastProgress = 0
-			self.__sendStartStop(event)
-
-	def __sendStartStop(self, event):
 		if event in (Events.PRINT_DONE, Events.PRINT_STARTED):
 			self._printer.commands("M150 R0 U255 B0")
 			#self._logger.info("M150 R0 U255 B0")
@@ -44,21 +33,23 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 
 	##~~ ProgressPlugin mixin
 	def on_print_progress(self, storage, path, progress):
-		# If the print is not started or progress did not change since the last time, we stop here
-		if not self.started or progress <= self.lastProgress:
-			#self._logger.info("Nothing to do!")
-			return
-
-		self.lastProgress = progress
-
-		# If sequential, then we use the leds except the last two as a progress bar
+		# If sequential, then we use the leds ####--->not now except the last two as a progress bar
 		if self.sequential:
-			count = self.ledcount - 2
-			progresscount = progress * count / 100
+			count = self.ledcount #- 2
+			progresscount = int(progress * count / 100)
 			for i in range(count):
-				if (i+1 < progresscount):
+				if (i == progresscount):
+					if self.blinking is None:
+						self.blinking = True
+					if self.blinking:
+						self._printer.commands("M150 R255 U255 B0 I{}".format(i))
+					else:
+						self._printer.commands("M150 R100 U100 B0 I{}".format(i))
+					self._logger.info("Blinking {} -> {}, {}".format(progress, progresscount, i))	
+					self.blinking = not self.blinking
+				elif (i < progresscount):
 					self._printer.commands("M150 R255 U255 B0 I{}".format(i))
-					#self._logger.info("M150 R255 U255 B0 I{}".format(i))
+			    	#self._logger.info("M150 R255 U255 B0 I{}".format(i))
 				else:
 					self._printer.commands("M150 R0 U0 B0 I{}".format(i))
 					#self._logger.info("M150 R0 U0 B0 I{}".format(i))
@@ -110,9 +101,6 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 
 	##~~ Temperatur 
 	def get_temperature_reading(self, comm, parsed_temps):
-		if not self.started:
-			return
-
 		bed = None
 		hotend = None
 		for k, v in parsed_temps.items():
@@ -143,16 +131,15 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 				#self._logger.info("M150 R{} U{} B0".format(percentage, percentage))
 			elif hotend is not None and hotend[1] is not None and hotend[1] > 0:
 				percentage = int(hotend[0] * 2.55 / hotend[1])
-				self._printer.commands("M150 I{} R{} U0 B{}".format(percentage, percentage))
+				self._printer.commands("M150 R{} U0 B{}".format(percentage, percentage))
 				#self._logger.info("M150 I{} R{} U0 B{}".format(percentage, percentage))
 
 		return parsed_temps
 
 	def on_after_startup(self):
-		self.started = False
 		self.ledcount = 10
 		self.sequential = True
-		self.lastProgress = 0
+		self.blinking = False
 
 		self._logger.info("OctoPrint-LightUp loaded!")
 
@@ -176,6 +163,6 @@ def __plugin_load__():
 	global __plugin_hooks__
 	__plugin_hooks__ = {
 		"octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
-		"octoprint.comm.protocol.temperatures.received": __plugin_implementation__.get_temperature_reading
+		#"octoprint.comm.protocol.temperatures.received": __plugin_implementation__.get_temperature_reading
 	}
 
