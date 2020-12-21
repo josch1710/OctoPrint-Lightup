@@ -64,7 +64,7 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 					#self._logger.info("M150 R0 U0 B0 I{}".format(i))
 		# If not sequential, then we use a color gradient
 		else:
-			color = progress * 2.55
+			color = int(progress * 2.55)
 			self._printer.commands("M150 R{} U{} B0".format(color, color))	
 			#self._logger.info("M150 R{} U{} B0".format(color, color))	
 
@@ -126,23 +126,23 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 		if self.sequential:
 			if bed is not None and bed[1] is not None and bed[1] > 0:
 				led_no = self.ledcount - 1
-				percentage = bed[0] * 2.55 / bed[1]
+				percentage = int(bed[0] * 2.55 / bed[1])
 				self._printer.commands("M150 I{} R{} U{} B0".format(led_no, percentage, percentage))
 				#self._logger.info("M150 I{} R{} U{} B0".format(led_no, percentage, percentage))
 
 			if hotend is not None and hotend[1] is not None and hotend[1] > 0:
 				led_no = self.ledcount - 2
-				percentage = hotend[0] * 2.55 / hotend[1]
+				percentage = int(hotend[0] * 2.55 / hotend[1])
 				self._printer.commands("M150 I{} R{} U{} B0".format(led_no, percentage, percentage))
 				#self._logger.info("M150 I{} R{} U{} B0".format(led_no, percentage, percentage))
 			
 		else:
-			if bed[1] is not None and bed[1] > 0:
-				led_no = self.ledcount - 1
+			if bed is not None and bed[1] is not None and bed[1] > 0:
+				percentage = int(bed[0] * 2.55 / bed[1])
 				self._printer.commands("M150 R{} U{} B0".format(percentage, percentage))
 				#self._logger.info("M150 R{} U{} B0".format(percentage, percentage))
-			elif hotend[1] is not None and hotend[1] > 0:
-				percentage = hotend[0] * 2.55 / hotend[1]
+			elif hotend is not None and hotend[1] is not None and hotend[1] > 0:
+				percentage = int(hotend[0] * 2.55 / hotend[1])
 				self._printer.commands("M150 I{} R{} U0 B{}".format(percentage, percentage))
 				#self._logger.info("M150 I{} R{} U0 B{}".format(percentage, percentage))
 
