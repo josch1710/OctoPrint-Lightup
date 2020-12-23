@@ -14,6 +14,9 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 	def on_event(self, event, payload):
 		if event in (Events.PRINT_DONE, Events.PRINT_STARTED):
 			self._printer.commands("M150 R0 U255 B0")
+			if event == Events.PRINT_DONE:
+				self.__blink['Blinking'] = False
+				self.__blink['Step'] = -1
 			#self._logger.info("M150 R0 U255 B0")
 		elif event == Events.PRINT_CANCELLED:
 			self._printer.commands("M150 R255 U165 B0")
