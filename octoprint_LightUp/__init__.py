@@ -1,14 +1,5 @@
 # coding=utf-8
 from __future__ import absolute_import
-
-### (Don't forget to remove me)
-# This is a basic skeleton for your plugin's __init__.py. You probably want to adjust the class name of your plugin
-# as well as the plugin mixins it's subclassing from. This is really just a basic skeleton to get you started,
-# defining your plugin as a template plugin, settings and asset plugin. Feel free to add or remove mixins
-# as necessary.
-#
-# Take a look at the documentation on what other plugin mixins are available.
-
 import octoprint.plugin
 from octoprint.events import Events
 
@@ -26,10 +17,16 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 			#self._logger.info("M150 R0 U255 B0")
 		elif event == Events.PRINT_CANCELLED:
 			self._printer.commands("M150 R255 U165 B0")
+			self.__blink['Blinking'] = False
+			self.__blink['Step'] = -1
 			#self._logger.info("M150 R255 U165 B0")
 		elif event == Events.PRINT_FAILED:
 			self._printer.commands("M150 R255 U0 B0")
+			self.__blink['Blinking'] = False
+			self.__blink['Step'] = -1
 			#self._logger.info("M150 R255 U0 B0")
+
+		self.__doBlink() # If we have a blinking LED, let it blink
 
 	##~~ ProgressPlugin mixin
 	def on_print_progress(self, storage, path, progress):
@@ -39,17 +36,12 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 			progresscount = int(progress * count / 100)
 			for i in range(count):
 				if (i == progresscount):
-					if self.blinking is None:
-						self.blinking = True
-					if self.blinking:
-						self._printer.commands("M150 R255 U255 B0 I{}".format(i))
-					else:
-						self._printer.commands("M150 R100 U100 B0 I{}".format(i))
-					self._logger.info("Blinking {} -> {}, {}".format(progress, progresscount, i))	
-					self.blinking = not self.blinking
+					self.__blink['Blinking'] = True
+					self.__blink['Index'] = i
+					self.__doBlink()
 				elif (i < progresscount):
 					self._printer.commands("M150 R255 U255 B0 I{}".format(i))
-			    	#self._logger.info("M150 R255 U255 B0 I{}".format(i))
+					#self._logger.info("M150 R255 U255 B0 I{}".format(i))
 				else:
 					self._printer.commands("M150 R0 U0 B0 I{}".format(i))
 					#self._logger.info("M150 R0 U0 B0 I{}".format(i))
@@ -57,13 +49,14 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 		else:
 			color = int(progress * 2.55)
 			self._printer.commands("M150 R{} U{} B0".format(color, color))	
-			#self._logger.info("M150 R{} U{} B0".format(color, color))	
+			self._logger.info("M150 R{} U{} B0".format(color, color))	
 
 	##~~ SettingsPlugin mixin
 
 	def get_settings_defaults(self):
 		return dict(
-			# put your plugin's default settings here
+			ledcount = 10,
+			sequential = True
 		)
 
 	##~~ AssetPlugin mixin
@@ -137,17 +130,34 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 		return parsed_temps
 
 	def on_after_startup(self):
-		self.ledcount = 10
-		self.sequential = True
-		self.blinking = False
-
+		self.ledcount = self._settings.get(["ledcount"])
+		self.sequential = self._settings.get(["sequential"])
+		self.__blink = {'Blinking': False, 'Step': -1, 'Index': -1 }
+		self.__blinkSteps = 5
 		self._logger.info("OctoPrint-LightUp loaded!")
 
+
+	def __doBlink(self):
+		try:
+			if not self.__blink['Blinking']: # Blinking deactivated
+				#self._logger.info("No Blinking")
+				return
+			
+			if self.__blink['Step'] < 0:
+				self.__blink['Step'] = 0
+			if self.__blink['Step'] >= self.__blinkSteps:
+				self.__blink['Step'] = 0
+			color = int(self.__blink['Step'] * 255 / self.__blinkSteps)
+			self.__blink['Step'] += 1
+			self._printer.commands("M150 R0 U0 B{} I{}".format(color, self.__blink['Index']))
+			#self._logger.info("M150 R0 U0 B{} I{}".format(color, self.__blink['Index']))
+		except AttributeError:
+			pass
 
 # If you want your plugin to be registered within OctoPrint under a different name than what you defined in setup.py
 # ("OctoPrint-PluginSkeleton"), you may define that here. Same goes for the other metadata derived from setup.py that
 # can be overwritten via __plugin_xyz__ control properties. See the documentation for that.
-__plugin_name__ = "Lightup Plugin"
+__plugin_name__ = "Light Up"
 
 # Starting with OctoPrint 1.4.0 OctoPrint will also support to run under Python 3 in addition to the deprecated
 # Python 2. New plugins should make sure to run under both versions for now. Uncomment one of the following
