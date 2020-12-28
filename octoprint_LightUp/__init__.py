@@ -17,6 +17,9 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 			if event == Events.PRINT_DONE:
 				self.__blink['Blinking'] = False
 				self.__blink['Step'] = -1
+			elif event == Events.PRINT_STARTED and self.sequential:
+				self.__blink['Blinking'] = True
+				self.__blink['Index'] = 0
 			#self._logger.info("M150 R0 U255 B0")
 		elif event == Events.PRINT_CANCELLED:
 			self.__lightLed(None, 255, 165, 0)
@@ -162,26 +165,30 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 			b = self.__gamma8[int(b)]
 			if i is not None:
 				self._printer.commands("M150 R{} U{} B{} I{}".format(r, g, b, i))
+				#self._logger.info("M150 R{} U{} B{} I{}".format(r, g, b, i))
 			else:
 				self._printer.commands("M150 R{} U{} B{}".format(r, g, b))
+				##self._logger.info("M150 R{} U{} B{}".format(r, g, b))
 		except:
 			pass
 
 	def __doBlink(self):
 		try:
 			if not self.__blink['Blinking']: # Blinking deactivated
-				#self._logger.info("No Blinking")
+				self._logger.info("No Blinking")
 				return
-			
+			if self.__blinkSteps == 0:
+				self.__blinkSteps = 1
 			if self.__blink['Step'] < 0:
 				self.__blink['Step'] = 0
 			if self.__blink['Step'] >= self.__blinkSteps:
 				self.__blink['Step'] = 0
 			color = int(self.__blink['Step'] * 255 / self.__blinkSteps)
 			self.__blink['Step'] += 1
-			self.__lightLED(self.__blink['Index'], 0, 0, color)
+			self.__lightLed(self.__blink['Index'], 0, 0, color)
 			#self._logger.info("M150 R0 U0 B{} I{}".format(color, self.__blink['Index']))
-		except AttributeError:
+		except AttributeError: #as data:
+			#self._logger.info("Exception {}".format(data))
 			pass
 
 # If you want your plugin to be registered within OctoPrint under a different name than what you defined in setup.py
