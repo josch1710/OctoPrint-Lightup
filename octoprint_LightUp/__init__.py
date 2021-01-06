@@ -17,20 +17,25 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 			self.__lightLed(None, 0, 255, 0)
 			self.__blink['Blinking'] = False
 			self.__blink['Step'] = -1
+			self.__running = event == Events.PRINT_STARTED
 		elif event == Events.PRINT_CANCELLED:
 			self.__lightLed(None, 255, 165, 0)
 			self.__blink['Blinking'] = False
 			self.__blink['Step'] = -1
+			self.__running = False
 		elif event == Events.PRINT_FAILED:
 			self.__lightLed(None, 255, 0, 0)
 			self.__blink['Blinking'] = False
 			self.__blink['Step'] = -1
+			self.__running = False
 		else:
 			self.__doBlink() # If we have a blinking LED, let it blink
 
 	##~~ ProgressPlugin mixin
 	def on_print_progress(self, storage, path, progress):
 		# If sequential, then we use the leds as a progress bar except the ones for lighting.
+		if not self.__running:
+			return
 		if self.__sequential:
 			count = self.__ledcount - len(self.__ledLighting)
 			progresscount = int(progress * count / 100)
@@ -207,6 +212,7 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 			177,180,182,184,186,189,191,193,196,198,200,203,205,208,210,213,
 			215,218,220,223,225,228,231,233,236,239,241,244,247,249,252,255 
 		)
+		self.__running = False
 		self._logger.info("OctoPrint-LightUp loaded!")
 
 
