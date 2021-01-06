@@ -17,9 +17,6 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 			self.__lightLed(None, 0, 255, 0)
 			self.__blink['Blinking'] = False
 			self.__blink['Step'] = -1
-			if event == Events.PRINT_STARTED and self.__sequential:
-				self.__blink['Blinking'] = True
-				self.__blink['Index'] = 0
 		elif event == Events.PRINT_CANCELLED:
 			self.__lightLed(None, 255, 165, 0)
 			self.__blink['Blinking'] = False
@@ -138,15 +135,21 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 		return dict(
 			ledcount = 10,
 			sequential = True,
-			ledLighting = "1,3-4,10"
+			ledlighting = "1,10"
 		)
 
 	def get_template_vars(self):
 		return dict(
 			ledcount = self._settings.get(["ledcount"]),
 			sequential = self._settings.get(["sequential"]),
-			ledLighting = self._settings.get(["ledLighting"])
+			ledlighting = self._settings.get(["ledLighting"])
 		)
+
+	def get_template_configs(self):
+		return [
+			dict(type="navbar", custom_bindings=False),
+			dict(type="settings", custom_bindings=False)
+		]
 
 	##~~ AssetPlugin mixin
 	def get_assets(self):

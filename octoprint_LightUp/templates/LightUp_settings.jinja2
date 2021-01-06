@@ -4,12 +4,17 @@
     <div class="control-group">
         <div class="controls">
             <label class="checkbox">
-                <input type="checkbox" data-bind="checked: settings.plugins.LightUp.sequential"> {{ _('Sequential LEDs') }}
+                <input id="sequential" type="checkbox" data-bind="checked: settings.plugins.LightUp.sequential"> {{ _('Sequential LEDs') }}
                 <span class="help-block">{{ _('If enabled, the plugin tries to control sequentially.') }}</span>
             </label>
             <label class="control-label">{{ _('LED count') }}</label>
             <div class="controls">
-                <input type="text" class="input-block-level" data-bind="value: settings.plugins.LightUp.ledcount">
+                <input id="ledcount" type="text" class="input-block-level sequential" data-bind="value: settings.plugins.LightUp.ledcount, enable: settings.plugins.LightUp.sequential">
+            </div>
+            <label class="control-label">{{ _('Lighting LEDs') }}</label>
+            <div class="controls">
+                <input id="ledlighting" type="text" class="input-block-level sequential" data-bind="value: settings.plugins.LightUp.ledlighting, enable: settings.plugins.LightUp.sequential">
+                <span class="help-block">{{ _('You can enter the indices of the LEDs, which should light up the build plate. Values are comma separated and whitespaces are allowed. Intervals are allowed in the form of a-b. Indices begin with 1.<br/>Example: 1, 5-6, 10') }}</span>
             </div>
         </div>
     </div>

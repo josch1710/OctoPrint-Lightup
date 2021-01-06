@@ -8,11 +8,38 @@ $(function() {
     function LightupViewModel(parameters) {
         var self = this;
 
-        // assign the injected parameters, e.g.:
-        // self.loginStateViewModel = parameters[0];
-        // self.settingsViewModel = parameters[1];
+        self.settingsViewModel = parameters[0];
 
-        // TODO: Implement your plugin's view model here.
+        self.sequential = ko.observable();
+        self.ledcount = ko.observable();
+        self.ledlighting = ko.observable();
+
+        self.sequential.subscribe(function(value)
+        {
+            console.debug("sequential", value);
+        });
+
+        self.onBeforeBinding = function()
+        {
+            self.mySettings = self.settingsViewModel.settings.plugins.LightUp;
+            self.sequential(self.mySettings.value);
+            self.ledcount(self.mySettings.value);
+            self.ledlighting(self.mySettings.value);
+        };
+
+        self.onConfigClose = function()
+        {
+            var data = {
+                plugins: {
+                    LightUp: {
+                        sequential: self.sequential(),
+                        ledcount: self.ledcount(),
+                        ledlighting: self.ledlighting()
+                    }
+                }
+            };
+            self.settingsViewModel.saveData(data);
+        };
     }
 
     /* view model class, parameters for constructor, container to bind to
@@ -22,8 +49,8 @@ $(function() {
     OCTOPRINT_VIEWMODELS.push({
         construct: LightupViewModel,
         // ViewModels your plugin depends on, e.g. loginStateViewModel, settingsViewModel, ...
-        dependencies: [ /* "loginStateViewModel", "settingsViewModel" */ ],
+        dependencies: [ /* "loginStateViewModel",*/ "settingsViewModel" ],
         // Elements to bind to, e.g. #settings_plugin_LightUp, #tab_plugin_LightUp, ...
-        elements: [ /* ... */ ]
+        elements: [ /*"#settings_plugin_LightUp"*/ ]
     });
 });
