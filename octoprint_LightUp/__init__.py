@@ -17,7 +17,9 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 			self.__lightLed(None, 0, 255, 0)
 			self.__blink['Blinking'] = False
 			self.__blink['Step'] = -1
-			self.__running = event == Events.PRINT_STARTED
+			self.__running = False
+			if event == Events.PRINT_STARTED:
+				self._running = True
 		elif event == Events.PRINT_CANCELLED:
 			self.__lightLed(None, 255, 165, 0)
 			self.__blink['Blinking'] = False
