@@ -19,7 +19,7 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 			self.__blink['Step'] = -1
 			self.__running = False
 			if event == Events.PRINT_STARTED:
-				self._running = True
+				self.__running = True
 		elif event == Events.PRINT_CANCELLED:
 			self.__lightLed(None, 255, 165, 0)
 			self.__blink['Blinking'] = False
@@ -39,7 +39,8 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 			return
 		# If sequential, then we use the leds as a progress bar except the ones for lighting.
 		if self.__sequential:
-			count = self.__ledcount - len(self.__ledLighting)
+			self._logger.info("ledlighting {}".format(self.__ledLighting))
+			count = int(self.__ledcount) - len(self.__ledLighting)
 			progresscount = int(progress * count / 100)
 			self.__blink['Blinking'] = False # First, we set it to false, then switch it on again, if needed.
 			index = 0 # internal counter for progress bar leds.
@@ -105,14 +106,15 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 			color = int(self.__blink['Step'] * 255 / self.__blinkSteps)
 			self.__blink['Step'] += 1
 			self.__lightLed(self.__blink['Index'], 0, 0, color)
-			#self._logger.info("M150 R0 U0 B{} I{}".format(color, self.__blink['Index']))
+			#self._logger.info("Blinking")
 		except AttributeError: #as data:
 			#self._logger.info("Exception {}".format(data))
 			pass
 
 	def __parseLighting(self, lightSetting):
 		if lightSetting is None:
-			return None
+			self._logger.info("no lighting")
+			return []
 			
 		parsed = []
 		parts = lightSetting.split(",")
@@ -121,7 +123,8 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 			#self._logger.info("matches {}".format(matches))
 			# If there was no match or more than one matches, there is an error
 			if matches is None or len(matches) != 1:
-				return None
+				self._logger.info("no match {}".format(matches))
+				return []
 		
 			# Settings indices are 1-based, led indices are 0-based
 			ledstart = int(matches[0][0])-1
@@ -145,6 +148,18 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 			ledlighting = "1,10"
 		)
 
+	def on_settings_save(self, data):
+		self._logger.info("settings {}".format(data))
+		for key in data:
+			if key == 'ledcount':
+				self.__ledcount = int(data[key])
+			elif key == 'sequential':
+				self.__sequential = data[key]
+			elif key == 'ledlighting':
+				self.__ledLighting = self.__parseLighting(data[key])
+		return data
+
+	##~~ TemplatePlugin mixin
 	def get_template_vars(self):
 		return dict(
 			ledcount = self._settings.get(["ledcount"]),
@@ -190,7 +205,7 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 		)
 
 	def on_after_startup(self):
-		self.__ledcount = self._settings.get(["ledcount"])
+		self.__ledcount = int(self._settings.get(["ledcount"]))
 		self.__sequential = self._settings.get(["sequential"])
 		self.__ledLighting = self.__parseLighting(self._settings.get(["ledLighting"]))
 		self.__blink = {'Blinking': False, 'Step': -1, 'Index': -1 }
