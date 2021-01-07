@@ -35,9 +35,9 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 
 	##~~ ProgressPlugin mixin
 	def on_print_progress(self, storage, path, progress):
-		# If sequential, then we use the leds as a progress bar except the ones for lighting.
 		if not self.__running:
 			return
+		# If sequential, then we use the leds as a progress bar except the ones for lighting.
 		if self.__sequential:
 			count = self.__ledcount - len(self.__ledLighting)
 			progresscount = int(progress * count / 100)
