@@ -11,6 +11,27 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 					octoprint.plugin.EventHandlerPlugin,
 					octoprint.plugin.StartupPlugin):
 
+	# Table lifted from here: https://learn.adafruit.com/led-tricks-gamma-correction/the-quick-fix
+	__gamma8 = (
+		0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+		0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1,
+		1,  1,  1,  1,  1,  1,  1,  1,  1,  2,  2,  2,  2,  2,  2,  2,
+		2,  3,  3,  3,  3,  3,  3,  3,  4,  4,  4,  4,  4,  5,  5,  5,
+		5,  6,  6,  6,  6,  7,  7,  7,  7,  8,  8,  8,  9,  9,  9, 10,
+		10, 10, 11, 11, 11, 12, 12, 13, 13, 13, 14, 14, 15, 15, 16, 16,
+		17, 17, 18, 18, 19, 19, 20, 20, 21, 21, 22, 22, 23, 24, 24, 25,
+		25, 26, 27, 27, 28, 29, 29, 30, 31, 32, 32, 33, 34, 35, 35, 36,
+		37, 38, 39, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 50,
+		51, 52, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 66, 67, 68,
+		69, 70, 72, 73, 74, 75, 77, 78, 79, 81, 82, 83, 85, 86, 87, 89,
+		90, 92, 93, 95, 96, 98, 99,101,102,104,105,107,109,110,112,114,
+		115,117,119,120,122,124,126,127,129,131,133,135,137,138,140,142,
+		144,146,148,150,152,154,156,158,160,162,164,167,169,171,173,175,
+		177,180,182,184,186,189,191,193,196,198,200,203,205,208,210,213,
+		215,218,220,223,225,228,231,233,236,239,241,244,247,249,252,255 
+	)
+
+
 	##~~ EventHandlerPlugin mixin
 	def on_event(self, event, payload):
 		if event in (Events.PRINT_DONE, Events.PRINT_STARTED):
@@ -20,6 +41,9 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 			self.__running = False
 			if event == Events.PRINT_STARTED:
 				self.__running = True
+				self.__ledcount = int(self._settings.get(["ledcount"]))
+				self.__sequential = self._settings.get(["sequential"])
+				self.__ledLighting = self.__parseLighting(self._settings.get(["ledlighting"]))
 		elif event == Events.PRINT_CANCELLED:
 			self.__lightLed(None, 255, 165, 0)
 			self.__blink['Blinking'] = False
@@ -69,9 +93,9 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 	# Brightness will be gamma corrected (cf. https://learn.adafruit.com/led-tricks-gamma-correction/the-quick-fix)
 	def __lightLed(self, i, r, g, b):
 		try:
-			r = self.__gamma8[int(r)]
-			g = self.__gamma8[int(g)]
-			b = self.__gamma8[int(b)]
+			r = LightUpPlugin.__gamma8[int(r)]
+			g = LightUpPlugin.__gamma8[int(g)]
+			b = LightUpPlugin.__gamma8[int(b)]
 			if i is None:
 				self._printer.commands("M150 R{} U{} B{}".format(r, g, b))
 				#self._logger.info("M150 R{} U{} B{}".format(r, g, b))
@@ -148,17 +172,6 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 			ledlighting = "1,10"
 		)
 
-	def on_settings_save(self, data):
-		self._logger.info("settings {}".format(data))
-		for key in data:
-			if key == 'ledcount':
-				self.__ledcount = int(data[key])
-			elif key == 'sequential':
-				self.__sequential = data[key]
-			elif key == 'ledlighting':
-				self.__ledLighting = self.__parseLighting(data[key])
-		return data
-
 	##~~ TemplatePlugin mixin
 	def get_template_vars(self):
 		return dict(
@@ -207,28 +220,9 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 	def on_after_startup(self):
 		self.__ledcount = int(self._settings.get(["ledcount"]))
 		self.__sequential = self._settings.get(["sequential"])
-		self.__ledLighting = self.__parseLighting(self._settings.get(["ledLighting"]))
+		self.__ledLighting = self.__parseLighting(self._settings.get(["ledlighting"]))
 		self.__blink = {'Blinking': False, 'Step': -1, 'Index': -1 }
 		self.__blinkSteps = 5
-		# Table lifted from here: https://learn.adafruit.com/led-tricks-gamma-correction/the-quick-fix
-		self.__gamma8 = (
-			0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-			0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1,
-			1,  1,  1,  1,  1,  1,  1,  1,  1,  2,  2,  2,  2,  2,  2,  2,
-			2,  3,  3,  3,  3,  3,  3,  3,  4,  4,  4,  4,  4,  5,  5,  5,
-			5,  6,  6,  6,  6,  7,  7,  7,  7,  8,  8,  8,  9,  9,  9, 10,
-			10, 10, 11, 11, 11, 12, 12, 13, 13, 13, 14, 14, 15, 15, 16, 16,
-			17, 17, 18, 18, 19, 19, 20, 20, 21, 21, 22, 22, 23, 24, 24, 25,
-			25, 26, 27, 27, 28, 29, 29, 30, 31, 32, 32, 33, 34, 35, 35, 36,
-			37, 38, 39, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 50,
-			51, 52, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 66, 67, 68,
-			69, 70, 72, 73, 74, 75, 77, 78, 79, 81, 82, 83, 85, 86, 87, 89,
-			90, 92, 93, 95, 96, 98, 99,101,102,104,105,107,109,110,112,114,
-			115,117,119,120,122,124,126,127,129,131,133,135,137,138,140,142,
-			144,146,148,150,152,154,156,158,160,162,164,167,169,171,173,175,
-			177,180,182,184,186,189,191,193,196,198,200,203,205,208,210,213,
-			215,218,220,223,225,228,231,233,236,239,241,244,247,249,252,255 
-		)
 		self.__running = False
 		self._logger.info("OctoPrint-LightUp loaded!")
 
