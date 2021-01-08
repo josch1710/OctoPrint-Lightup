@@ -63,7 +63,7 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 			return
 		# If sequential, then we use the leds as a progress bar except the ones for lighting.
 		if self.__sequential:
-			self._logger.info("ledlighting {}".format(self.__ledLighting))
+			#self._logger.info("ledlighting {}".format(self.__ledLighting))
 			count = int(self.__ledcount) - len(self.__ledLighting)
 			progresscount = int(progress * count / 100)
 			self.__blink['Blinking'] = False # First, we set it to false, then switch it on again, if needed.
@@ -137,7 +137,7 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 
 	def __parseLighting(self, lightSetting):
 		if lightSetting is None:
-			self._logger.info("no lighting")
+			#self._logger.info("no lighting")
 			return []
 			
 		parsed = []
@@ -147,7 +147,7 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 			#self._logger.info("matches {}".format(matches))
 			# If there was no match or more than one matches, there is an error
 			if matches is None or len(matches) != 1:
-				self._logger.info("no match {}".format(matches))
+				#self._logger.info("no match {}".format(matches))
 				return []
 		
 			# Settings indices are 1-based, led indices are 0-based
@@ -167,9 +167,9 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 	##~~ SettingsPlugin mixin
 	def get_settings_defaults(self):
 		return dict(
-			ledcount = 10,
-			sequential = True,
-			ledlighting = "1,10"
+			ledcount = 1,
+			sequential = False,
+			ledlighting = ""
 		)
 
 	##~~ TemplatePlugin mixin
