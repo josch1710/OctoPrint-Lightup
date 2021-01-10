@@ -93,15 +93,15 @@ class LightupPlugin(octoprint.plugin.SettingsPlugin,
 	# Brightness will be gamma corrected (cf. https://learn.adafruit.com/led-tricks-gamma-correction/the-quick-fix)
 	def __lightLed(self, i, r, g, b):
 		try:
-			r = LightUpPlugin.__gamma8[int(r)]
-			g = LightUpPlugin.__gamma8[int(g)]
-			b = LightUpPlugin.__gamma8[int(b)]
+			r = LightupPlugin.__gamma8[int(r)]
+			g = LightupPlugin.__gamma8[int(g)]
+			b = LightupPlugin.__gamma8[int(b)]
 			if i is None:
 				self._printer.commands("M150 R{} U{} B{}".format(r, g, b))
-				#self._logger.info("M150 R{} U{} B{}".format(r, g, b))
+				self._logger.info("M150 R{} U{} B{}".format(r, g, b))
 			else:
 				self._printer.commands("M150 R{} U{} B{} I{}".format(r, g, b, i))
-				#self._logger.info("M150 R{} U{} B{} I{}".format(r, g, b, i))
+				self._logger.info("M150 R{} U{} B{} I{}".format(r, g, b, i))
 
 		except:
 			pass
