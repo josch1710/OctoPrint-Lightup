@@ -14,11 +14,11 @@ plugin_package = "octoprint_LightUp"
 plugin_name = "OctoPrint-Lightup"
 
 # The plugin's version. Can be overwritten within OctoPrint's internal data via __plugin_version__ in the plugin module
-plugin_version = "0.2.0"
+plugin_version = "0.3.0"
 
 # The plugin's description. Can be overwritten within OctoPrint's internal data via __plugin_description__ in the plugin
 # module
-plugin_description = """Let there be light."""
+plugin_description = """Let there be light."" This plugin aims to control LEDs connected to the printer board via M150."
 
 # The plugin's author. Can be overwritten within OctoPrint's internal data via __plugin_author__ in the plugin module
 plugin_author = "Jochen Schäfer"
